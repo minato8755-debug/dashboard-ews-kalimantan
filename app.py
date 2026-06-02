@@ -134,7 +134,7 @@ else:
 filtered_df = df_terhitung[(df_terhitung['Tanggal'] >= start_date) & (df_terhitung['Tanggal'] <= end_date)].copy()
 
 # TAMPILAN UTAMA
-st.markdown(f"<h1 style='text-align: center; color: #2c3e50;'>🌱 Dashboard Intelijen Agronomi: {komoditas}</h1>", unsafe_allow_html=True)
+st.markdown(f"<h1 style='text-align: center; color: #2c3e50;'>🌱 Dashboard Agroklimatologi: {komoditas}</h1>", unsafe_allow_html=True)
 st.markdown(f"<p style='text-align: center; font-size: 18px; color: #7f8c8d;'>📍 <b>Wilayah:</b> {prov_pilihan} | 🔍 <b>Fokus OPT:</b> {opt_pilihan}</p>", unsafe_allow_html=True)
 st.markdown("<hr/>", unsafe_allow_html=True)
 
