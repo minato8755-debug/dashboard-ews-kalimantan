@@ -3,7 +3,48 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-st.set_page_config(page_title="EWS Multi-Komoditas Terpadu", page_icon="🌾", layout="wide")
+# 1. Konfigurasi Halaman Web (Lebar penuh)
+st.set_page_config(page_title="EWS Multi-Komoditas Terpadu", page_icon="🌿", layout="wide")
+
+# ================= KODE CSS UNTUK MEMPERINDAH UI (BACKGROUND GAMBAR) =================
+st.markdown("""
+    <style>
+    /* Mengubah Background Utama menjadi Gambar Pertanian dengan Efek Kaca Transparan */
+    .stApp {
+        background-image: linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.75)), 
+                          url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1920&auto=format&fit=crop");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+    
+    /* Mempercantik font metrik angka agar terlihat melayang (Glassmorphism) */
+    div[data-testid="metric-container"] {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 15px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        border-left: 6px solid #2ecc71;
+    }
+
+    /* Mempercantik kotak analisis */
+    .analisis-box {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 20px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    
+    /* Membuat latar menu tab sedikit berwarna agar jelas */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 10px 10px 0 0;
+        padding: 10px;
+    }
+    </style>
+""", unsafe_allow_html=True)
+# =====================================================================================# =================================================================
 
 @st.cache_data
 def load_data():
@@ -27,9 +68,9 @@ df_mentah = load_data()
 def proses_model_biologis(df_provinsi, komoditas, opt):
     pdf = df_provinsi.copy()
     pdf['Suhu_Rata2'] = (pdf['Tmax'] + pdf['Tmin']) / 2
-    
     status_list, indikator_list, generasi_list = [], [], []
     
+    # MESIN BIOLOGI (Logika Tetap Sama!)
     if opt == 'Ulat Kantong (Metisa plana)':
         t_base = 10; acc_gdd = 0; gen = 1
         for idx, row in pdf.iterrows():
@@ -67,8 +108,8 @@ def proses_model_biologis(df_provinsi, komoditas, opt):
     return pdf
 
 # MENU SAMPING
-st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3209/3209935.png", width=100)
-st.sidebar.title("Panel EWS Terpadu")
+st.sidebar.image("https://cdn-icons-png.flaticon.com/512/3209/3209935.png", width=150)
+st.sidebar.markdown("<h2 style='text-align: center; color: #2c3e50;'>Panel Kontrol</h2>", unsafe_allow_html=True)
 
 prov_pilihan = st.sidebar.selectbox("📍 Pilih Provinsi:", sorted(df_mentah['Provinsi'].unique()))
 st.sidebar.markdown("---")
@@ -93,104 +134,84 @@ else:
 filtered_df = df_terhitung[(df_terhitung['Tanggal'] >= start_date) & (df_terhitung['Tanggal'] <= end_date)].copy()
 
 # TAMPILAN UTAMA
-st.title(f"Dashboard Agroklimatologi: {komoditas}")
-st.markdown(f"**Wilayah:** {prov_pilihan} | **Fokus OPT:** {opt_pilihan}")
+st.markdown(f"<h1 style='text-align: center; color: #2c3e50;'>🌱 Dashboard Intelijen Agronomi: {komoditas}</h1>", unsafe_allow_html=True)
+st.markdown(f"<p style='text-align: center; font-size: 18px; color: #7f8c8d;'>📍 <b>Wilayah:</b> {prov_pilihan} | 🔍 <b>Fokus OPT:</b> {opt_pilihan}</p>", unsafe_allow_html=True)
+st.markdown("<hr/>", unsafe_allow_html=True)
 
 if not filtered_df.empty:
     latest = filtered_df.iloc[-1]
     status_terkini, nino, nilai_ind = latest['Status_Hama'], latest['NINA34'], latest['Nilai_Indikator']
     
-    # Deteksi ENSO
-    if nino >= 0.5: status_enso, warna_enso, ikon_enso = "El Niño (Kering & Panas)", "#e67e22", "🔥"
-    elif nino <= -0.5: status_enso, warna_enso, ikon_enso = "La Niña (Basah & Dingin)", "#2980b9", "🌧️"
-    else: status_enso, warna_enso, ikon_enso = "Netral (Normal)", "#7f8c8d", "⚖️"
+    if nino >= 0.5: status_enso, ikon_enso = "El Niño (Kering & Panas)", "🔥"
+    elif nino <= -0.5: status_enso, ikon_enso = "La Niña (Basah & Dingin)", "🌧️"
+    else: status_enso, ikon_enso = "Netral (Normal)", "⚖️"
 
-    # Deteksi Warna Status
-    if "Aman" in status_terkini: bg_color, icon, alert_type = '#2ecc71', '✅', 'success'
-    elif "Bahaya" in status_terkini: bg_color, icon, alert_type = '#e74c3c', '🚨', 'error'
-    else: bg_color, icon, alert_type = '#f1c40f', '⚠️', 'warning'
+    if "Aman" in status_terkini: bg_color, icon = 'linear-gradient(135deg, #2ecc71, #27ae60)', '✅'
+    elif "Bahaya" in status_terkini: bg_color, icon = 'linear-gradient(135deg, #e74c3c, #c0392b)', '🚨'
+    else: bg_color, icon = 'linear-gradient(135deg, #f1c40f, #f39c12)', '⚠️'
 
-    # METRIK ATAS
+    # BARIS INDIKATOR UTAMA
     col1, col2, col3 = st.columns(3)
-    col1.metric(f"Indikator Utama ({latest['Satuan']})", f"{nilai_ind:.1f}")
+    col1.metric(f"Indikator ({latest['Satuan']})", f"{nilai_ind:.1f}")
     col2.metric("Siklus / Generasi Ke-", f"{latest['Generasi']}")
     col3.metric("Indeks ENSO 3.4", f"{nino:.2f}", delta=status_enso, delta_color="off")
     
     st.markdown(f"""
-        <div style="background-color: {bg_color}; padding: 25px; border-radius: 12px; text-align: center; color: white; margin-bottom: 20px;">
-            <h1 style="margin: 0; font-size: 30px;">{icon} {status_terkini.upper()}</h1>
-            <p style="margin: 5px 0 0 0; font-size: 16px;">Sistem Peringatan Dini {prov_pilihan}</p>
+        <div style="background: {bg_color}; padding: 25px; border-radius: 20px; text-align: center; color: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-top: 10px; margin-bottom: 30px;">
+            <h1 style="margin: 0; font-size: 38px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">{icon} {status_terkini.upper()}</h1>
+            <p style="margin: 5px 0 0 0; font-size: 18px; opacity: 0.9;">Status Peringatan Dini Wilayah {prov_pilihan}</p>
         </div>
     """, unsafe_allow_html=True)
 
-    # ================= OTAL ANALISIS DINAMIS =================
-    st.markdown("### 🧠 Analisis Sistem & Rekomendasi Tindakan")
+    # MEMBUAT TATA LETAK TAB (MENU NAVIGASI DALAM HALAMAN)
+    tab1, tab2, tab3 = st.tabs(["📊 Kurva Risiko", "🧠 Analisis Pakar", "📋 Data Lapangan"])
     
-    with st.container(border=True):
-        st.markdown(f"#### 🌍 Dampak Iklim Makro {ikon_enso} terhadap Ekosistem **{prov_pilihan}**")
-        
-        # Logika silang antara Cuaca vs Jenis OPT
-        if komoditas in ["Kelapa Sawit", "Kelapa"]: # Serangga (Butuh Panas)
-            if nino >= 0.5:
-                st.write(f"Indeks Niño3.4 berada di angka {nino:.2f}. Di wilayah {prov_pilihan}, anomali suhu **El Niño** memicu akumulasi GDD yang jauh lebih agresif. Serangga berdarah dingin ({opt_pilihan}) merespons panas ekstrem ini dengan **memperpendek siklus hidupnya**. Waspadai ledakan populasi (*outbreak*) karena generasi baru akan tumpang tindih dengan cepat.")
-            elif nino <= -0.5:
-                st.write(f"Indeks Niño3.4 menunjukkan **La Niña** ({nino:.2f}). Hujan ekstrem dan suhu sejuk di {prov_pilihan} sangat menguntungkan pekebun. Penumpukan GDD melambat, memperpanjang umur larva, dan tingginya intensitas hujan dapat secara alami mencuci hama kecil dari tajuk daun kelapa/sawit.")
-            else:
-                st.write(f"Kondisi iklim di {prov_pilihan} berada pada fase **Netral**. Siklus biologis serangga berjalan sesuai kalender agronomis normal.")
-        else: # Jamur (Butuh Hujan)
-            if nino >= 0.5:
-                st.write(f"Anomali **El Niño** ({nino:.2f}) di {prov_pilihan} menciptakan udara panas dan kering. Ini adalah **kabar baik bagi kebun karet**. Spora *Pestalotiopsis sp.* menjadi dorman (tidak aktif) karena kurangnya kelembapan yang dibutuhkan untuk infeksi sekunder pada daun muda.")
-            elif nino <= -0.5:
-                st.write(f"🚨 **PERINGATAN LA NIÑA!** Indeks Niño3.4 berada di {nino:.2f}. Curah hujan lebat tiada henti di {prov_pilihan} menciptakan kondisi *micro-climate* tajuk yang sangat basah dan lembap. Ini adalah pemicu utama penyebaran spora jamur mematikan secara sporadis melalui cipratan air hujan.")
-            else:
-                st.write(f"Iklim **Netral** di {prov_pilihan}. Tetap waspada pada hari-hari pasca-hujan yang diikuti mendung berkepanjangan yang meningkatkan kelembapan tajuk.")
+    with tab1:
+        st.markdown("<div class='analisis-box'>", unsafe_allow_html=True)
+        st.markdown(f"### Dinamika Risiko {opt_pilihan}")
+        fig = px.line(filtered_df, x='Tanggal', y='Nilai_Indikator', template='plotly_white')
+        fig.add_hline(y=latest['Batas_1'], line_dash="dash", line_color="green", annotation_text="Batas Aman")
+        fig.add_hline(y=latest['Batas_2'], line_dash="dash", line_color="red", annotation_text="Ambang Kritis")
+        if latest['Batas_Max'] > latest['Batas_2']:
+            fig.add_hline(y=latest['Batas_Max'], line_dash="solid", line_color="orange", annotation_text="Akhir Siklus")
+        fig.update_layout(hovermode="x unified", margin=dict(l=0, r=0, t=30, b=0))
+        st.plotly_chart(fig, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown("#### 🎯 Rekomendasi Tindakan Teknis Lapangan")
-        
-        # Logika Rekomendasi berdasarkan Jenis Hama & Status
+    with tab2:
+        st.markdown("<div class='analisis-box'>", unsafe_allow_html=True)
+        st.markdown(f"#### 🌍 Dampak Iklim Makro {ikon_enso} terhadap **{prov_pilihan}**")
+        if komoditas in ["Kelapa Sawit", "Kelapa"]:
+            if nino >= 0.5: st.info(f"Anomali suhu **El Niño** memicu GDD agresif. Serangga merespons panas ekstrem ini dengan memperpendek siklus hidupnya. Waspadai ledakan populasi mendadak.")
+            elif nino <= -0.5: st.info(f"**La Niña** membawa suhu sejuk. Penumpukan GDD melambat, memperpanjang umur larva. Curah hujan tinggi dapat mencuci hama dari tajuk daun.")
+            else: st.info(f"Fase **Netral**. Siklus biologis berjalan normal sesuai kalender iklim.")
+        else:
+            if nino >= 0.5: st.info(f"Panasnya **El Niño** membuat spora jamur dorman. Risiko infeksi sangat rendah.")
+            elif nino <= -0.5: st.error(f"🚨 **PERINGATAN LA NIÑA!** Hujan lebat menciptakan *micro-climate* basah, memicu penyebaran spora jamur mematikan secara sporadis.")
+            else: st.info(f"Iklim **Netral**. Tetap waspada pada hari mendung berkepanjangan.")
+
+        st.markdown("#### 🎯 Rekomendasi Tindakan Teknis")
         if opt_pilihan == 'Ulat Kantong (Metisa plana)':
-            if "Aman" in status_terkini:
-                st.success("TINDAKAN: Lakukan Global Sensus (1 pelepah per 5 pohon). Titik fokus pengamatan adalah sisa-sisa generasi sebelumnya. Siapkan inventaris logistik insektisida biologi (Bacillus thuringiensis) di gudang sebelum fase kritis dimulai.")
-            elif "Bahaya" in status_terkini:
-                st.error("TINDAKAN KILAT: Larva sedang rakus-rakusnya merusak epidermis pelepah sawit! Segera aplikasikan racun kontak/lambung (seperti Deltametrin) atau *trunk injection* pada tanaman tinggi. Anda hanya memiliki waktu sempit sebelum mereka membungkus diri dengan kantong keras.")
-            else:
-                st.warning("TINDAKAN: Hentikan penyemprotan kimia udara, ulat sudah membentuk kepompong pelindung tebal sehingga penyemprotan hanya buang-buang biaya. Fokuskan tenaga kerja untuk pengutipan kepompong manual atau lepaskan musuh alami (predator *Sycanus*).")
-                
+            if "Aman" in status_terkini: st.success("Lakukan Sensus (1 pelepah per 5 pohon). Siapkan logistik insektisida biologi (B. thuringiensis).")
+            elif "Bahaya" in status_terkini: st.error("TINDAKAN KILAT: Ulat merusak epidermis! Aplikasikan racun kontak (Deltametrin) / trunk injection sebelum kantong menebal.")
+            else: st.warning("Hentikan penyemprotan udara (ulat kebal dalam kantong). Fokus kutip kepompong manual / lepas musuh alami (Sycanus).")
         elif opt_pilihan == 'Kumbang Tanduk (Oryctes rhinoceros)':
-            if "Aman" in status_terkini:
-                st.success("TINDAKAN: Fase telur dan ulat gendon berada di bawah tanah atau di batang lapuk. Lakukan **sanitasi kebun**, cacah (chipping) batang kelapa/sawit tumbang, dan aplikasikan jamur *Metarhizium anisopliae* di tempat pembuangan sampah organik untuk membunuh ulat sejak dini.")
-            elif "Waspada" in status_terkini:
-                st.warning("TINDAKAN: Ulat gendon mulai menjadi pupa. Periksa kembali tumpukan tandan kosong (tankos) atau batang lapuk. Segera siapkan dan pasang perangkap feromon (Ferotrap) di batas-batas blok kebun dengan rasio 1 perangkap per 2 Hektar.")
-            else:
-                st.error("TINDAKAN KILAT: Kumbang dewasa (Imago) sedang aktif terbang dan menggerek titik tumbuh (pucuk/pupus) kelapa. Segera lakukan pengutipan kumbang manual dari tajuk, taburkan insektisida butiran (Karbofuran) di pucuk daun kelapa yang masih muda, dan periksa intensif pohon-pohon di pinggir jalan air.")
-                
+            if "Aman" in status_terkini: st.success("Sanitasi kebun, cacah batang lapuk, dan tabur jamur Metarhizium anisopliae di tumpukan sampah organik.")
+            elif "Waspada" in status_terkini: st.warning("Siapkan dan pasang perangkap feromon di batas blok kebun (rasio 1 perangkap per 2 Ha).")
+            else: st.error("TINDAKAN KILAT: Kumbang aktif menggerek pucuk! Lakukan pengutipan manual dan tabur insektisida butiran (Karbofuran).")
         elif opt_pilihan == 'Penyakit Gugur Daun (Pestalotiopsis sp.)':
-            if "Aman" in status_terkini:
-                st.success("TINDAKAN: Risiko infeksi sangat rendah. Lakukan pemupukan NPK ekstra untuk memastikan tanaman Karet memiliki energi yang cukup guna membentuk kanopi daun yang tebal dan sehat menjelang musim hujan depan.")
-            elif "Waspada" in status_terkini:
-                st.warning("TINDAKAN: Curah hujan mendukung perkecambahan spora. Lakukan pemantauan pada daun muda (fase flush). Jika kebun memiliki riwayat endemik, jadwalkan aplikasi fungisida protektif (seperti Mankozeb) dengan metode penyemprotan *mist blower* secara preventif.")
-            else:
-                st.error("TINDAKAN KILAT: Lingkungan basah sempurna bagi jamur! Gejala bercak daun cokelat menyebar cepat dan memicu gugur daun masal yang akan anjloknya produksi lateks. Segera gunakan **fungisida sistemik** (berbahan aktif Heksakonazol atau Propikonazol) menggunakan drone pertanian atau penyemprotan tajuk dosis tinggi. Hindari menyadap karet saat daun masih basah karena manusia bisa menjadi vektor penyebar spora!")
+            if "Aman" in status_terkini: st.success("Risiko rendah. Lakukan pemupukan ekstra untuk menebalkan daun muda.")
+            elif "Waspada" in status_terkini: st.warning("Semprotkan fungisida protektif (Mankozeb) secara preventif.")
+            else: st.error("TINDAKAN KILAT: Lingkungan sangat basah. Gunakan fungisida sistemik (Heksakonazol) lewat *mist blower* / drone.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.divider()
-
-    # GRAFIK INTERAKTIF
-    st.markdown(f"### 📈 Dinamika Indikator ({latest['Satuan']})")
-    fig = px.line(filtered_df, x='Tanggal', y='Nilai_Indikator', title=f"Kurva Risiko {opt_pilihan} di {prov_pilihan}")
-    
-    # Warna garis batas dinamis
-    fig.add_hline(y=latest['Batas_1'], line_dash="dash", line_color="green", annotation_text="Batas Aman/Transisi")
-    fig.add_hline(y=latest['Batas_2'], line_dash="dash", line_color="red", annotation_text="Ambang Kritis Lapangan")
-    if latest['Batas_Max'] > latest['Batas_2']:
-        fig.add_hline(y=latest['Batas_Max'], line_dash="solid", line_color="orange", annotation_text="Batas Akhir Siklus")
-        
-    st.plotly_chart(fig, use_container_width=True)
-
-    # TABEL DATA
-    st.markdown("### 📋 Transkrip Data Harian")
-    kolom = ['Tanggal', 'CH (mm)', 'Suhu_Rata2', 'NINA34', 'Nilai_Indikator', 'Generasi', 'Status_Hama']
-    tabel_tampil = filtered_df[kolom].copy()
-    tabel_tampil['Tanggal'] = tabel_tampil['Tanggal'].dt.strftime('%d-%b-%Y')
-    st.dataframe(tabel_tampil, use_container_width=True)
+    with tab3:
+        st.markdown("<div class='analisis-box'>", unsafe_allow_html=True)
+        st.markdown("### Transkrip Data Harian")
+        kolom = ['Tanggal', 'CH (mm)', 'Suhu_Rata2', 'NINA34', 'Nilai_Indikator', 'Generasi', 'Status_Hama']
+        tabel_tampil = filtered_df[kolom].copy()
+        tabel_tampil['Tanggal'] = tabel_tampil['Tanggal'].dt.strftime('%d-%b-%Y')
+        st.dataframe(tabel_tampil, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 else:
     st.warning("Data tidak tersedia untuk rentang waktu/provinsi yang dipilih.")
