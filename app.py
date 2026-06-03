@@ -39,10 +39,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 # =================================================================
 
-# 2. Fungsi Memuat Data
+# 2. Fungsi Memuat Data (KEMBALI MEMBACA 1 FILE EXCEL UTUH)
 @st.cache_data
 def load_data():
-    weather_df = pd.read_csv('EWS.xlsx - DATA CUACA.csv')
+    # Membaca Sheet DATA CUACA dari file EWS.xlsx
+    weather_df = pd.read_excel('EWS.xlsx', sheet_name='DATA CUACA')
     weather_df['Tanggal'] = pd.to_datetime(weather_df['Tanggal'])
     weather_df = weather_df.sort_values(by=['Provinsi', 'Tanggal']).reset_index(drop=True)
     weather_df['YearMonth'] = weather_df['Tanggal'].dt.to_period('M')
@@ -50,19 +51,21 @@ def load_data():
     if 'RH' in weather_df.columns:
         weather_df.rename(columns={'RH': 'RH (%)'}, inplace=True)
 
-    enso_df = pd.read_csv('EWS.xlsx - ENSO INDEX.csv')
+    # Membaca Sheet ENSO INDEX dari file EWS.xlsx
+    enso_df = pd.read_excel('EWS.xlsx', sheet_name='ENSO INDEX')
     enso_col = [c for c in enso_df.columns if 'NINA34' in c][0]
     enso_df.rename(columns={enso_col: 'NINA34'}, inplace=True)
     enso_df['DATE'] = pd.to_datetime(enso_df['DATE'])
     enso_df['YearMonth'] = enso_df['DATE'].dt.to_period('M')
 
+    # Menggabungkan Keduanya
     df = pd.merge(weather_df, enso_df[['YearMonth', 'NINA34']], on='YearMonth', how='left')
     df.drop('YearMonth', axis=1, inplace=True)
     return df
 
 df_mentah = load_data()
 
-# 3. MESIN BIOLOGI BERDASARKAN LITERATUR SAINTIFIK TERBARU
+# 3. MESIN BIOLOGI BERDASARKAN LITERATUR SAINTIFIK
 def proses_model_biologis(df_provinsi, komoditas, opt):
     pdf = df_provinsi.copy()
     pdf['Suhu_Rata2'] = (pdf['Tmax'] + pdf['Tmin']) / 2
@@ -73,11 +76,11 @@ def proses_model_biologis(df_provinsi, komoditas, opt):
         acc_gdd = 0; gen = 1
         for idx, row in pdf.iterrows():
             acc_gdd += max(row['Suhu_Rata2'] - t_base, 0)
-            if acc_gdd > 2134: acc_gdd -= 2134; gen += 1 # Batas maksimal total siklus hidup
+            if acc_gdd > 2134: acc_gdd -= 2134; gen += 1 
             indikator_list.append(acc_gdd); generasi_list.append(gen)
             
-            if acc_gdd <= 200: status_list.append('Aman (Fase Telur & Awal Tetas)') # Telur & Pupa: 69-200 GDD
-            elif acc_gdd <= 1283: status_list.append('Bahaya (Fase Larva Aktif Merusak)') # Larva butuh 555-1083 GDD
+            if acc_gdd <= 200: status_list.append('Aman (Fase Telur & Awal Tetas)')
+            elif acc_gdd <= 1283: status_list.append('Bahaya (Fase Larva Aktif Merusak)')
             else: status_list.append('Waspada (Pupa & Persiapan Dewasa)')
             
         pdf['Satuan'] = '°C-day (GDD)'; pdf['Batas_1'] = 200; pdf['Batas_2'] = 1283; pdf['Batas_Max'] = 2134
@@ -87,11 +90,11 @@ def proses_model_biologis(df_provinsi, komoditas, opt):
         acc_gdd = 0; gen = 1
         for idx, row in pdf.iterrows():
             acc_gdd += max(row['Suhu_Rata2'] - t_base, 0)
-            if acc_gdd > 5000: acc_gdd -= 5000; gen += 1 # Siklus total (326-455 hari) ~ 5000 GDD
+            if acc_gdd > 5000: acc_gdd -= 5000; gen += 1
             indikator_list.append(acc_gdd); generasi_list.append(gen)
             
-            if acc_gdd <= 230: status_list.append('Aman (Fase Telur di Kayu Lapuk)') # Telur 4-14 hari
-            elif acc_gdd <= 4500: status_list.append('Waspada (Larva Instar 1-3 & Pupa)') # Larva 120-200 hari, Pupa 32-59 hari
+            if acc_gdd <= 230: status_list.append('Aman (Fase Telur di Kayu Lapuk)')
+            elif acc_gdd <= 4500: status_list.append('Waspada (Larva Instar 1-3 & Pupa)')
             else: status_list.append('Bahaya (Imago/Kumbang Terbang Merusak)') 
             
         pdf['Satuan'] = '°C-day (GDD)'; pdf['Batas_1'] = 230; pdf['Batas_2'] = 4500; pdf['Batas_Max'] = 5000
@@ -103,7 +106,6 @@ def proses_model_biologis(df_provinsi, komoditas, opt):
         for ch, rh in zip(pdf['Akumulasi_CH_7Hari'], pdf['Rata2_RH_7Hari']):
             indikator_list.append(ch); generasi_list.append("-")
             
-            # Waspada = CH > 100mm/bulan (~25mm/minggu), Outbreak = CH > 300mm/bulan (~75mm/minggu)
             if ch < 25 or rh < 70:
                 status_list.append('Aman (Udara Kering - Spora Mati)')
             elif 25 <= ch <= 75 and 70 <= rh <= 85:
