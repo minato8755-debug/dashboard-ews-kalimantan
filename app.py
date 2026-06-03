@@ -12,7 +12,7 @@ st.markdown("""
     /* Mengubah Background Utama menjadi Gambar Pertanian dengan Efek Kaca Transparan */
     .stApp {
         background-image: linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.75)), 
-                          url("https://images.unsplash.com/photo-1500382017468-9049fed747ef?q=80&w=1920&auto=format&fit=crop");
+                          url("https://www.pexels.com/photo/collecting-resin-from-trees-12366786/");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
