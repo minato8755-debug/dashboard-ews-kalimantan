@@ -39,11 +39,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 # =================================================================
 
-# 2. Fungsi Memuat Data (KEMBALI MEMBACA 1 FILE EXCEL UTUH)
+# 2. Fungsi Memuat Data
 @st.cache_data
 def load_data():
-    # Membaca Sheet DATA CUACA dari file EWS.xlsx
-    weather_df = pd.read_excel('EWS.xlsx', sheet_name='DATA CUACA')
+    weather_df = pd.read_csv('EWS.xlsx - DATA CUACA.csv')
     weather_df['Tanggal'] = pd.to_datetime(weather_df['Tanggal'])
     weather_df = weather_df.sort_values(by=['Provinsi', 'Tanggal']).reset_index(drop=True)
     weather_df['YearMonth'] = weather_df['Tanggal'].dt.to_period('M')
@@ -51,21 +50,19 @@ def load_data():
     if 'RH' in weather_df.columns:
         weather_df.rename(columns={'RH': 'RH (%)'}, inplace=True)
 
-    # Membaca Sheet ENSO INDEX dari file EWS.xlsx
-    enso_df = pd.read_excel('EWS.xlsx', sheet_name='ENSO INDEX')
+    enso_df = pd.read_csv('EWS.xlsx - ENSO INDEX.csv')
     enso_col = [c for c in enso_df.columns if 'NINA34' in c][0]
     enso_df.rename(columns={enso_col: 'NINA34'}, inplace=True)
     enso_df['DATE'] = pd.to_datetime(enso_df['DATE'])
     enso_df['YearMonth'] = enso_df['DATE'].dt.to_period('M')
 
-    # Menggabungkan Keduanya
     df = pd.merge(weather_df, enso_df[['YearMonth', 'NINA34']], on='YearMonth', how='left')
     df.drop('YearMonth', axis=1, inplace=True)
     return df
 
 df_mentah = load_data()
 
-# 3. MESIN BIOLOGI BERDASARKAN LITERATUR SAINTIFIK
+# 3. MESIN BIOLOGI BERDASARKAN LITERATUR SAINTIFIK TERBARU
 def proses_model_biologis(df_provinsi, komoditas, opt):
     pdf = df_provinsi.copy()
     pdf['Suhu_Rata2'] = (pdf['Tmax'] + pdf['Tmin']) / 2
@@ -90,7 +87,7 @@ def proses_model_biologis(df_provinsi, komoditas, opt):
         acc_gdd = 0; gen = 1
         for idx, row in pdf.iterrows():
             acc_gdd += max(row['Suhu_Rata2'] - t_base, 0)
-            if acc_gdd > 5000: acc_gdd -= 5000; gen += 1
+            if acc_gdd > 5000: acc_gdd -= 5000; gen += 1 
             indikator_list.append(acc_gdd); generasi_list.append(gen)
             
             if acc_gdd <= 230: status_list.append('Aman (Fase Telur di Kayu Lapuk)')
@@ -149,7 +146,7 @@ else:
 filtered_df = df_terhitung[(df_terhitung['Tanggal'] >= start_date) & (df_terhitung['Tanggal'] <= end_date)].copy()
 
 # 5. TAMPILAN UTAMA
-st.markdown(f"<h1 style='text-align: center; color: #2c3e50;'>🌱 Dashboard Intelijen Agronomi: {komoditas}</h1>", unsafe_allow_html=True)
+st.markdown(f"<h1 style='text-align: center; color: #2c3e50;'>🌱 Dashboard Agroklimatologi: {komoditas}</h1>", unsafe_allow_html=True)
 st.markdown(f"<p style='text-align: center; font-size: 18px; color: #7f8c8d;'>📍 <b>Wilayah:</b> {prov_pilihan} | 🔍 <b>Fokus OPT:</b> {opt_pilihan}</p>", unsafe_allow_html=True)
 st.markdown("<hr/>", unsafe_allow_html=True)
 
@@ -158,9 +155,9 @@ if not filtered_df.empty:
     status_terkini, nino, nilai_ind = latest['Status_Hama'], latest['NINA34'], latest['Nilai_Indikator']
     rh_terkini = latest['RH (%)']
     
-    if nino >= 0.5: status_enso, ikon_enso = "El Niño (Kering & Panas)", "🔥"
-    elif nino <= -0.5: status_enso, ikon_enso = "La Niña (Basah & Dingin)", "🌧️"
-    else: status_enso, ikon_enso = "Netral (Normal)", "⚖️"
+    if nino >= 0.5: status_enso, ikon_enso, iklim_teks = "El Niño (Kering & Panas)", "🔥", "El Niño"
+    elif nino <= -0.5: status_enso, ikon_enso, iklim_teks = "La Niña (Basah & Dingin)", "🌧️", "La Niña"
+    else: status_enso, ikon_enso, iklim_teks = "Netral (Normal)", "⚖️", "Netral"
 
     if "Aman" in status_terkini: bg_color, icon = 'linear-gradient(135deg, #2ecc71, #27ae60)', '✅'
     elif "Bahaya" in status_terkini: bg_color, icon = 'linear-gradient(135deg, #e74c3c, #c0392b)', '🚨'
@@ -181,7 +178,7 @@ if not filtered_df.empty:
     """, unsafe_allow_html=True)
 
     # TATA LETAK TAB
-    tab1, tab2, tab3 = st.tabs(["📊 Kurva Risiko", "🧠 Detail & Mitigasi Pakar (SOP)", "📋 Data Lapangan"])
+    tab1, tab2, tab3 = st.tabs(["📊 Kurva Risiko", "🧠 Detail & Mitigasi", "📋 Data Lapangan"])
     
     with tab1:
         st.markdown("<div class='analisis-box'>", unsafe_allow_html=True)
@@ -204,47 +201,74 @@ if not filtered_df.empty:
 
     with tab2:
         st.markdown("<div class='analisis-box'>", unsafe_allow_html=True)
-        st.markdown(f"#### 🧬 Karakteristik Biologi & Faktor Pemicu")
+        st.markdown(f"#### 🧬 Karakteristik Biologi & Pengaruh Variabilitas ENSO ({ikon_enso} {iklim_teks})")
         
         if opt_pilihan == 'Ulat Kantong (Metisa plana)':
-            st.info("""
-            **Biologi Hama:** Spesies ini membutuhkan total akumulasi termal 1.440 °d - 2.134 °d. Fase Larva memakan porsi terlama (555 °d - 1.083 °d) dan merupakan fase pengrusakan tertinggi pada tajuk sawit. Fase Telur & Pupa lebih singkat (69 °d - 200 °d).
+            st.info(f"""
+            **Biologi Dasar:** Total akumulasi termal 1.440 °d - 2.134 °d. Fase Larva memakan porsi terlama (555 °d - 1.083 °d) dan merupakan fase pengrusakan tertinggi.
+            
+            **Korelasi ENSO ({iklim_teks}):** {"Kondisi panas El Niño membuat GDD terakumulasi secara agresif. Durasi instar larva menjadi jauh lebih singkat, sehingga ledakan (outbreak) terjadi sangat mendadak. Udara kering menekan agen hayati alami, memperburuk kerusakan." if nino >= 0.5 else 
+            "Kondisi basah La Niña memperlambat GDD. Siklus hidup ulat memanjang, namun curah hujan dan kelembapan yang tinggi sangat menguntungkan penyebaran jamur entomopatogen alami yang dapat membunuh larva di lapangan." if nino <= -0.5 else 
+            "Kondisi iklim Netral. Akumulasi GDD dan siklus hidup hama berjalan sesuai kalender agronomis normal tanpa anomali kecepatan tetas."}
             """)
+            
         elif opt_pilihan == 'Kumbang Tanduk (Oryctes rhinoceros)':
-            st.info("""
-            **Siklus Panjang:** Satu generasi memakan waktu 326 hingga 455 hari! Larva (grub) memiliki 3 instar yang berlangsung 120-200 hari, sementara fase pra-pupa/pupa berlangsung 32-59 hari. Hama menghindari suhu di atas 37°C.  
-            **Faktor Pemicu:** Metode *zero-burning* saat *replanting*. Batang sawit yang ditumbang/dicacah (*chipped trunks*) dan tumpukan Tandan Kosong Kelapa Sawit (TKKS) menjadi habitat pembiakan basah dan kaya nutrisi bagi hama.
+            st.info(f"""
+            **Biologi Dasar:** Siklus sangat panjang (326-455 hari). Fase larva/grub di kayu lapuk berlangsung 120-200 hari. Metode *zero-burning* dan tumpukan TKKS adalah pemicu utamanya.
+            
+            **Korelasi ENSO ({iklim_teks}):** {"Kekeringan akibat El Niño membuat tumpukan bahan organik (breeding site) cepat kering. Meski menghambat larva, suhu ekstrem memaksa imago/kumbang dewasa terbang lebih agresif mencari sumber air dan makanan di tajuk/pucuk sawit muda." if nino >= 0.5 else 
+            "La Niña memicu pelapukan kayu dan TKKS lebih cepat akibat terendam air. Hal ini menciptakan sarang larva (grub) yang sangat melimpah. Namun, kelembapan ini juga memfasilitasi epidemi jamur *Metarhizium* secara masif." if nino <= -0.5 else 
+            "Iklim Netral. Degradasi *breeding site* (batang lapuk) berjalan perlahan, populasi larva stabil di bawah tanah."}
             """)
+            
         elif opt_pilihan == 'Penyakit Gugur Daun (Pestalotiopsis sp.)':
-            st.info("""
-            **Siklus Jamur 7-14 Hari:** *Pestalotiopsis sp.* merupakan patogen *airborne* & *waterborne*. Fase meliputi: **1. Inokulasi** (terbawa angin/air ke daun muda/flush); **2. Penetrasi** (12-24 jam masuk via stomata); **3. Nekrosis** (3-5 hari merusak sel daun); **4. Sporulasi** (7-14 hari menghasilkan *acervuli* bintik hitam pemicu spora baru).  
-            **Faktor Iklim:** Kelembapan (RH) >85% + embun 8-10 jam mempercepat germinasi 3x lipat. RH di bawah 70% akan menghentikan penyebaran spora.
+            st.info(f"""
+            **Biologi Dasar:** Patogen *airborne* & *waterborne*. Siklus 7-14 hari. RH >85% + embun 8-10 jam mempercepat germinasi spora 3x lipat. 
+            
+            **Korelasi ENSO ({iklim_teks}):** {"El Niño menekan curah hujan dan RH tajuk turun secara drastis. Ini adalah KONDISI TERBAIK bagi pekebun karena lingkungan udara kering secara paksa menggagalkan proses penetrasi spora ke dalam stomata." if nino >= 0.5 else 
+            "La Niña adalah ANCAMAN UTAMA untuk patogen ini. Hujan deras >300mm/bulan disertai mendung tebal menjaga RH absolut di atas 85%. Kondisi ini memicu pelepasan *acervuli* secara beruntun dan *outbreak* gugur daun masif tidak dapat dihindari tanpa intervensi kimia." if nino <= -0.5 else 
+            "Iklim Netral dengan kelembapan transisi. Infeksi spora berjalan sporadis tergantung embun pagi dan hujan lokal."}
             """)
 
-        st.markdown("#### 🛠️ Strategi Pengendalian Hama Terpadu (PHT/SOP)")
+        st.markdown(f"#### 🛠️ Strategi Mitigasi Terpadu Berbasis Fase & Iklim ({iklim_teks})")
+        
+        # LOGIKA MITIGASI YANG DIKAWINKAN DENGAN STATUS HAMA & ENSO
         if opt_pilihan == 'Ulat Kantong (Metisa plana)':
             if "Aman" in status_terkini: 
-                st.success("**TINDAKAN (Fase Telur):** Lakukan Global Sensus (1 pelepah per 5 pohon). Persiapkan stok agen hayati *Bacillus thuringiensis* di gudang sebelum telur menetas serentak.")
+                mitigasi = "Lakukan sensus (1 pelepah/5 pohon)."
+                if nino >= 0.5: mitigasi += " **Tindakan Khusus El Niño:** Karena panas ekstrem mempercepat penetasan, interval sensus harus dirapatkan menjadi seminggu sekali. Siapkan B. thuringiensis lebih awal."
+                st.success(f"**FASE TELUR:** {mitigasi}")
             elif "Bahaya" in status_terkini: 
-                st.error("**TINDAKAN KILAT (Fase Larva Aktif):** Ulat sedang rakus-rakusnya mengikis epidermis daun (Instar 1-3). Lakukan penyemprotan kontak atau injeksi batang (*trunk injection*) segera sebelum larva membuat kantong yang keras.")
+                mitigasi = "Larva (Instar 1-3) sangat rakus. Lakukan penyemprotan insektisida kontak/injeksi batang segera."
+                if nino <= -0.5: mitigasi += " **Tindakan Khusus La Niña:** Hujan akan mencuci insektisida semprot. Prioritaskan *trunk injection* (injeksi batang) agar racun sistemik sampai ke daun tanpa hilang tercuci hujan."
+                st.error(f"**FASE LARVA AKTIF:** {mitigasi}")
             else: 
-                st.warning("**TINDAKAN (Pupa):** Ulat memasuki masa kepompong dan bersiap menjadi ngengat. Semprotan pestisida tidak lagi berguna. Lakukan pengutipan kantong kepompong secara manual.")
-        
+                st.warning("**FASE PUPA:** Ulat di dalam kepompong tebal. Pestisida tidak efektif. Lakukan pengutipan kantong secara manual dan pastikan *breeding site* bersih.")
+                
         elif opt_pilihan == 'Kumbang Tanduk (Oryctes rhinoceros)':
             if "Aman" in status_terkini: 
-                st.success("**KULTUR TEKNIS (Fase Telur/Awal Larva):** Percepat penanaman Legume Cover Crop (*Mucuna bracteata*) pada area *replanting* untuk menutupi tumpukan cacahan batang sawit (menutup penciuman imago). Semprotkan jamur *Metarhizium anisopliae* pada tumpukan TKKS.")
+                mitigasi = "Tanam kacangan (*Mucuna bracteata*) untuk menutup tumpukan kayu lapuk."
+                if nino <= -0.5: mitigasi += " **Tindakan Khusus La Niña:** Kayu basah sangat disukai larva. Manfaatkan momen basah ini dengan menabur jamur *Metarhizium anisopliae* di tumpukan TKKS, karena jamur akan menyebar pesat."
+                st.success(f"**FASE TELUR & LARVA:** {mitigasi}")
             elif "Waspada" in status_terkini: 
-                st.warning("**PENGENDALIAN HAYATI (Fase Pupa):** Larva grub telah membesar di dalam tanah/kayu. Pertimbangkan penyebaran agen hayati *Oryctes Nudivirus* (OrNV) yang sukses menginfeksi usus kumbang dan menurunkan daya bertelurnya.")
+                st.warning("**FASE PUPA:** Larva membesar di kayu. Sebarkan agen hayati *Oryctes Nudivirus* (OrNV) di lapangan untuk menurunkan fekunditas (daya tetas) kumbang.")
             else: 
-                st.error("**TINDAKAN KILAT (Imago):** Kumbang dewasa merusak tajuk! Segera pasang **Ferotrap** (senyawa sintetik *ethyl 4-methyloctanoate*) dengan rasio 1 perangkap per 2 Hektar untuk menjebak imago terbang secara massal.")
-        
+                mitigasi = "Imago merusak pucuk! Pasang **Ferotrap** (1 trap/2 Ha)."
+                if nino >= 0.5: mitigasi += " **Tindakan Khusus El Niño:** Kumbang haus air dan akan menyerang pucuk muda (umbut) secara brutal. Tambahkan aplikasi insektisida butiran (*Karbofuran*) langsung pada pucuk kelapa muda."
+                st.error(f"**FASE IMAGO/DEWASA:** {mitigasi}")
+                
         elif opt_pilihan == 'Penyakit Gugur Daun (Pestalotiopsis sp.)':
             if "Aman" in status_terkini: 
-                st.success("**PREVENTIF (Spora Dorman):** Kelembapan di bawah 70% menghentikan sporulasi. Fokus lakukan sanitasi dan aplikasi *Trichoderma sp.* di atas tumpukan daun gugur agar tidak menjadi inokulum di musim hujan.")
+                mitigasi = "Fokus pada sanitasi sisa daun di tanah."
+                if nino >= 0.5: mitigasi += " **Tindakan Khusus El Niño:** Cuaca kering adalah waktu emas! Genjot pemupukan Nitrogen (Urea 20-25%) dan Kalium (KCl) untuk memacu pembentukan daun baru (*flush*) setebal mungkin sebelum musim hujan tiba."
+                st.success(f"**SPORA DORMAN:** {mitigasi}")
             elif "Waspada" in status_terkini: 
-                st.warning("**MITIGASI KIMIAWI (Curah Hujan Meningkat):** Waspada curah hujan mendekati 100 mm/bulan. Lakukan penyemprotan *mist blower* (*Propikonazol*, *Heksakonazol*, atau *Mankozeb*) terutama pada masa pembentukan daun muda (*flushing*).")
+                st.warning("**PRA-INFEKSI:** Hujan dan RH meningkat. Aplikasikan fungisida protektif (*Mankozeb 80 WP*) dengan *mist-blower* pada daun muda untuk mencegah spora menembus stomata.")
             else: 
-                st.error("**TINDAKAN KILAT (Outbreak):** Curah hujan >300 mm/bulan & RH >85%. Rontok hebat sedang terjadi. **Kultur Teknis:** Segera injeksi pohon dengan pupuk ekstra Nitrogen (Urea 20-25%) dan Kalium (KCl) dari dosis normal untuk memaksa pohon memproduksi kanopi daun baru dengan cepat!")
+                mitigasi = "Wabah sedang terjadi! Daun mulai rontok masif."
+                if nino <= -0.5: mitigasi += " **Tindakan Khusus La Niña:** Kelembapan absolut memicu infeksi harian. Segera lakukan pengasapan (*fogging*) fungisida Triazol (*Propikonazol/Heksakonazol*). Taburkan jamur *Trichoderma sp.* di tanah untuk menghancurkan daun rontok yang terinfeksi."
+                st.error(f"**OUTBREAK (LEDANG JAMUR):** {mitigasi}")
+                
         st.markdown("</div>", unsafe_allow_html=True)
 
     with tab3:
