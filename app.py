@@ -39,10 +39,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 # =================================================================
 
-# 2. Fungsi Memuat Data
+# 2. Fungsi Memuat Data (SUDAH DIPERBAIKI: MEMBACA 1 FILE EXCEL 'EWS.xlsx')
 @st.cache_data
 def load_data():
-    weather_df = pd.read_csv('EWS.xlsx - DATA CUACA.csv')
+    weather_df = pd.read_excel('EWS.xlsx', sheet_name='DATA CUACA')
     weather_df['Tanggal'] = pd.to_datetime(weather_df['Tanggal'])
     weather_df = weather_df.sort_values(by=['Provinsi', 'Tanggal']).reset_index(drop=True)
     weather_df['YearMonth'] = weather_df['Tanggal'].dt.to_period('M')
@@ -50,7 +50,7 @@ def load_data():
     if 'RH' in weather_df.columns:
         weather_df.rename(columns={'RH': 'RH (%)'}, inplace=True)
 
-    enso_df = pd.read_csv('EWS.xlsx - ENSO INDEX.csv')
+    enso_df = pd.read_excel('EWS.xlsx', sheet_name='ENSO INDEX')
     enso_col = [c for c in enso_df.columns if 'NINA34' in c][0]
     enso_df.rename(columns={enso_col: 'NINA34'}, inplace=True)
     enso_df['DATE'] = pd.to_datetime(enso_df['DATE'])
@@ -207,32 +207,25 @@ if not filtered_df.empty:
             st.info(f"""
             **Biologi Dasar:** Total akumulasi termal 1.440 °d - 2.134 °d. Fase Larva memakan porsi terlama (555 °d - 1.083 °d) dan merupakan fase pengrusakan tertinggi.
             
-            **Korelasi ENSO ({iklim_teks}):** {"Kondisi panas El Niño membuat GDD terakumulasi secara agresif. Durasi instar larva menjadi jauh lebih singkat, sehingga ledakan (outbreak) terjadi sangat mendadak. Udara kering menekan agen hayati alami, memperburuk kerusakan." if nino >= 0.5 else 
-            "Kondisi basah La Niña memperlambat GDD. Siklus hidup ulat memanjang, namun curah hujan dan kelembapan yang tinggi sangat menguntungkan penyebaran jamur entomopatogen alami yang dapat membunuh larva di lapangan." if nino <= -0.5 else 
-            "Kondisi iklim Netral. Akumulasi GDD dan siklus hidup hama berjalan sesuai kalender agronomis normal tanpa anomali kecepatan tetas."}
+            **Korelasi ENSO ({iklim_teks}):** {"Kondisi panas El Niño membuat GDD terakumulasi secara agresif. Durasi instar larva menjadi jauh lebih singkat, sehingga ledakan (outbreak) terjadi sangat mendadak. Udara kering menekan agen hayati alami, memperburuk kerusakan." if nino >= 0.5 else "Kondisi basah La Niña memperlambat GDD. Siklus hidup ulat memanjang, namun curah hujan dan kelembapan yang tinggi sangat menguntungkan penyebaran jamur entomopatogen alami yang dapat membunuh larva di lapangan." if nino <= -0.5 else "Kondisi iklim Netral. Akumulasi GDD dan siklus hidup hama berjalan sesuai kalender agronomis normal tanpa anomali kecepatan tetas."}
             """)
             
         elif opt_pilihan == 'Kumbang Tanduk (Oryctes rhinoceros)':
             st.info(f"""
             **Biologi Dasar:** Siklus sangat panjang (326-455 hari). Fase larva/grub di kayu lapuk berlangsung 120-200 hari. Metode *zero-burning* dan tumpukan TKKS adalah pemicu utamanya.
             
-            **Korelasi ENSO ({iklim_teks}):** {"Kekeringan akibat El Niño membuat tumpukan bahan organik (breeding site) cepat kering. Meski menghambat larva, suhu ekstrem memaksa imago/kumbang dewasa terbang lebih agresif mencari sumber air dan makanan di tajuk/pucuk sawit muda." if nino >= 0.5 else 
-            "La Niña memicu pelapukan kayu dan TKKS lebih cepat akibat terendam air. Hal ini menciptakan sarang larva (grub) yang sangat melimpah. Namun, kelembapan ini juga memfasilitasi epidemi jamur *Metarhizium* secara masif." if nino <= -0.5 else 
-            "Iklim Netral. Degradasi *breeding site* (batang lapuk) berjalan perlahan, populasi larva stabil di bawah tanah."}
+            **Korelasi ENSO ({iklim_teks}):** {"Kekeringan akibat El Niño membuat tumpukan bahan organik (breeding site) cepat kering. Meski menghambat larva, suhu ekstrem memaksa imago/kumbang dewasa terbang lebih agresif mencari sumber air dan makanan di tajuk/pucuk sawit muda." if nino >= 0.5 else "La Niña memicu pelapukan kayu dan TKKS lebih cepat akibat terendam air. Hal ini menciptakan sarang larva (grub) yang sangat melimpah. Namun, kelembapan ini juga memfasilitasi epidemi jamur *Metarhizium* secara masif." if nino <= -0.5 else "Iklim Netral. Degradasi *breeding site* (batang lapuk) berjalan perlahan, populasi larva stabil di bawah tanah."}
             """)
             
         elif opt_pilihan == 'Penyakit Gugur Daun (Pestalotiopsis sp.)':
             st.info(f"""
             **Biologi Dasar:** Patogen *airborne* & *waterborne*. Siklus 7-14 hari. RH >85% + embun 8-10 jam mempercepat germinasi spora 3x lipat. 
             
-            **Korelasi ENSO ({iklim_teks}):** {"El Niño menekan curah hujan dan RH tajuk turun secara drastis. Ini adalah KONDISI TERBAIK bagi pekebun karena lingkungan udara kering secara paksa menggagalkan proses penetrasi spora ke dalam stomata." if nino >= 0.5 else 
-            "La Niña adalah ANCAMAN UTAMA untuk patogen ini. Hujan deras >300mm/bulan disertai mendung tebal menjaga RH absolut di atas 85%. Kondisi ini memicu pelepasan *acervuli* secara beruntun dan *outbreak* gugur daun masif tidak dapat dihindari tanpa intervensi kimia." if nino <= -0.5 else 
-            "Iklim Netral dengan kelembapan transisi. Infeksi spora berjalan sporadis tergantung embun pagi dan hujan lokal."}
+            **Korelasi ENSO ({iklim_teks}):** {"El Niño menekan curah hujan dan RH tajuk turun secara drastis. Ini adalah KONDISI TERBAIK bagi pekebun karena lingkungan udara kering secara paksa menggagalkan proses penetrasi spora ke dalam stomata." if nino >= 0.5 else "La Niña adalah ANCAMAN UTAMA untuk patogen ini. Hujan deras >300mm/bulan disertai mendung tebal menjaga RH absolut di atas 85%. Kondisi ini memicu pelepasan *acervuli* secara beruntun dan *outbreak* gugur daun masif tidak dapat dihindari tanpa intervensi kimia." if nino <= -0.5 else "Iklim Netral dengan kelembapan transisi. Infeksi spora berjalan sporadis tergantung embun pagi dan hujan lokal."}
             """)
 
         st.markdown(f"#### 🛠️ Strategi Mitigasi Terpadu Berbasis Fase & Iklim ({iklim_teks})")
         
-        # LOGIKA MITIGASI YANG DIKAWINKAN DENGAN STATUS HAMA & ENSO
         if opt_pilihan == 'Ulat Kantong (Metisa plana)':
             if "Aman" in status_terkini: 
                 mitigasi = "Lakukan sensus (1 pelepah/5 pohon)."
